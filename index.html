@@ -1,0 +1,25 @@
+<!doctype html><html lang="he" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no"><title>מגדל מוערם</title><style>*{box-sizing:border-box;margin:0}body{background:#0b1020;color:#fff;font-family:system-ui,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;min-height:100vh;touch-action:manipulation;user-select:none}h1{font-size:22px;margin:12px 0 4px}#hud{display:flex;gap:18px;margin:6px;font-size:18px}canvas{background:#111936;border-radius:12px;max-width:96vw;box-shadow:0 0 30px #4af3}button{background:#38bdf8;border:0;border-radius:10px;padding:10px 20px;font-size:17px;font-weight:700;margin:8px;cursor:pointer}p{opacity:.7;font-size:14px;margin:4px}</style></head><body>
+<h1>🏗️ מגדל מוערם</h1><div id="hud"><span>קומות: <b id="s">0</b></span><span>שיא: <b id="b">0</b></span></div>
+<canvas id="c" width="360" height="560"></canvas><p>לחצו / רווח / לחיצה על המסך כדי להניח את הקומה</p><button id="r">התחל מחדש</button>
+<script>
+const c=document.getElementById('c'),x=c.getContext('2d'),W=360;let best=+localStorage.stackBest||0;
+let L,cur,dir,speed,score,over,cam,fx;
+function init(){L=[{x:80,w:200,y:0,h:0}];cur={x:0,w:200,y:1};dir=1;speed=2.5;score=0;over=false;cam=0;fx=[];s.textContent=0;b.textContent=best}
+const hue=i=>`hsl(${(i*14+200)%360} 80% 60%)`;
+function drop(){if(over){init();return}
+ const p=L[L.length-1];const l=Math.max(cur.x,p.x),r=Math.min(cur.x+cur.w,p.x+p.w),ov=r-l;
+ if(ov<=0){over=true;fx.push({x:cur.x,w:cur.w,y:L.length,vy:0});if(score>best){best=score;localStorage.stackBest=best}b.textContent=best;return}
+ if(Math.abs(cur.x-p.x)<5){cur.x=p.x;cur.w=p.w}else{
+  if(cur.x<p.x)fx.push({x:cur.x,w:p.x-cur.x,y:L.length,vy:0});else fx.push({x:r,w:cur.x+cur.w-r,y:L.length,vy:0});
+  cur.x=l;cur.w=ov}
+ L.push({x:cur.x,w:cur.w,y:L.length});score++;s.textContent=score;speed=Math.min(2.5+score*.18,9);cur={x:dir>0?0:W-cur.w,w:cur.w,y:L.length}}
+function draw(){x.fillStyle='#111936';x.fillRect(0,0,W,560);const tc=Math.max(0,(L.length-8)*28);cam+=(tc-cam)*.1;
+ const Y=i=>520-(i*28)+cam;
+ L.forEach((q,i)=>{x.fillStyle=hue(i);x.fillRect(q.x,Y(i),q.w,26)});
+ if(!over){x.fillStyle=hue(L.length);x.fillRect(cur.x,Y(cur.y),cur.w,26)}
+ fx.forEach(f=>{f.vy+=.6;f.y-=0;f.dy=(f.dy||0)+f.vy;x.fillStyle='#fff5';x.fillRect(f.x,Y(f.y)+f.dy,f.w,26)});fx=fx.filter(f=>f.dy<700);
+ x.fillStyle='#fff';x.font='bold 40px Arial';x.textAlign='center';x.fillText(score,W/2,60);
+ if(over){x.fillStyle='#000a';x.fillRect(0,200,W,120);x.fillStyle='#fff';x.font='bold 28px Arial';x.fillText('המגדל קרס! '+score+' קומות',W/2,252);x.font='16px Arial';x.fillText('לחצו להתחלה מחדש',W/2,285)}}
+function loop(){if(!over){cur.x+=dir*speed;if(cur.x+cur.w>W){cur.x=W-cur.w;dir=-1}if(cur.x<0){cur.x=0;dir=1}}draw();requestAnimationFrame(loop)}
+c.addEventListener('pointerdown',drop);addEventListener('keydown',e=>{if(e.code=='Space'){e.preventDefault();drop()}});r.onclick=init;init();loop();
+</script></body></html>
